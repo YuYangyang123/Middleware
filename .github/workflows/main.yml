@@ -1,4 +1,4 @@
-name: Build ARM64
+name: Build ARM64 Compatible
 
 on:
   workflow_dispatch:
@@ -6,30 +6,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04-arm
+    container:
+      image: quay.io/pypa/manylinux2014_aarch64
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
+      - name: Install PyInstaller
         run: |
-          python -m pip install --upgrade pip
-          pip install pyinstaller
+          /opt/python/cp312-cp312/bin/python -m pip install --upgrade pip
+          /opt/python/cp312-cp312/bin/python -m pip install pyinstaller
 
       - name: Build
         run: |
           cd middleware_final_project
-          pyinstaller --onedir -n middleware-app middleware/app.py \
+          /opt/python/cp312-cp312/bin/pyinstaller --onedir -n middleware-app middleware/app.py \
             --add-data "config/default_config.json:config" \
             --add-data "examples/sample_input.json:examples"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-arm64-build
+          name: linux-arm64-compatible-build
           path: middleware_final_project/dist/
