@@ -1,4 +1,4 @@
-name: Build ARM64 Rocky8 Compatible
+name: Build ARM64 CentOS7 Compatible
 
 on:
   workflow_dispatch:
@@ -11,39 +11,42 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build in Rocky8 ARM64
+      - name: Build in ARM64 CentOS7
         run: |
           docker run --rm \
             --platform linux/arm64/v8 \
             -v "$PWD":/work \
             -w /work \
-            rockylinux:8 \
+            arm64v8/centos:7 \
             bash -c '
               set -e
 
-              dnf install -y gcc make wget tar gzip \
-                zlib-devel bzip2-devel openssl-devel libffi-devel \
-                xz-devel sqlite-devel readline-devel ncurses-devel \
-                binutils
+              sed -i "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-*.repo
+              sed -i "s|#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=http://vault.centos.org/altarch/7.9.2009|g" /etc/yum.repos.d/CentOS-*.repo
+
+              yum clean all
+              yum install -y gcc make wget tar gzip zlib-devel bzip2-devel \
+                libffi-devel xz-devel sqlite-devel readline-devel ncurses-devel \
+                openssl-devel binutils
 
               cd /tmp
-              wget https://www.python.org/ftp/python/3.10.13/Python-3.10.13.tgz
-              tar -xzf Python-3.10.13.tgz
-              cd Python-3.10.13
+              wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
+              tar -xzf Python-3.9.18.tgz
+              cd Python-3.9.18
 
-              ./configure --prefix=/opt/python310 --enable-shared
+              ./configure --prefix=/opt/python39 --enable-shared
               make -j2
               make install
 
-              export LD_LIBRARY_PATH=/opt/python310/lib:$LD_LIBRARY_PATH
+              export LD_LIBRARY_PATH=/opt/python39/lib:$LD_LIBRARY_PATH
 
-              /opt/python310/bin/python3.10 -m ensurepip
-              /opt/python310/bin/python3.10 -m pip install --upgrade pip
-              /opt/python310/bin/python3.10 -m pip install pyinstaller
+              /opt/python39/bin/python3.9 -m ensurepip
+              /opt/python39/bin/python3.9 -m pip install --upgrade pip
+              /opt/python39/bin/python3.9 -m pip install pyinstaller
 
               cd /work/middleware_final_project
 
-              /opt/python310/bin/pyinstaller \
+              /opt/python39/bin/pyinstaller \
                 --onedir \
                 -n middleware-app \
                 middleware/app.py \
@@ -54,5 +57,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-arm64-rocky8-build
+          name: linux-arm64-centos7-build
           path: middleware_final_project/dist/
