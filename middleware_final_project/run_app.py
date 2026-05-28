@@ -1,4 +1,4 @@
-import runpy
+from middleware.app import main
 
 if __name__ == "__main__":
-    runpy.run_module("middleware.app", run_name="__main__")
+    main()
