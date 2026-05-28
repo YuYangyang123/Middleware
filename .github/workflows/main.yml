@@ -8,21 +8,20 @@ jobs:
     runs-on: ubuntu-22.04-arm
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build in CentOS 7 ARM64
         run: |
           docker run --rm --platform linux/arm64/v8 \
             -v "$PWD:/src" \
             -w /src \
-            arm64v8/centos:7 bash -lc '
+            arm64v8/centos:7 /bin/bash <<'EOF'
           set -eux
 
-          sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/CentOS-*.repo
-          sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/CentOS-*.repo
-          sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/CentOS-*.repo
-          sed -i s|centos/7|altarch/7.9.2009|g /etc/yum.repos.d/CentOS-*.repo
+          sed -i 's|mirror.centos.org|vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo
+          sed -i 's|^#baseurl=http|baseurl=http|g' /etc/yum.repos.d/CentOS-*.repo
+          sed -i 's|^mirrorlist=http|#mirrorlist=http|g' /etc/yum.repos.d/CentOS-*.repo
+          sed -i 's|centos/7|altarch/7.9.2009|g' /etc/yum.repos.d/CentOS-*.repo
 
           yum clean all
           yum install -y gcc gcc-c++ make wget tar gzip zlib-devel bzip2-devel \
@@ -61,7 +60,7 @@ jobs:
           file dist/middleware-app/middleware-app
           ldd dist/middleware-app/middleware-app || true
           strings /lib64/libc.so.6 | grep GLIBC_2.17
-          '
+          EOF
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
