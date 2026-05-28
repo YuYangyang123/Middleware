@@ -11,22 +11,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build in Python 3.10 Buster ARM64
+      - name: Build ARM64 Binary
         run: |
           docker run --rm \
             -v "$PWD":/work \
             -w /work/middleware_final_project \
-            python:3.10-slim-buster \
+            python:3.10-slim-bullseye \
             bash -c '
               set -e
 
               apt-get update
-              apt-get install -y binutils
+              apt-get install -y binutils gcc
 
               python -m pip install --upgrade pip
               pip install pyinstaller
 
-              pyinstaller --onedir -n middleware-app middleware/app.py \
+              pyinstaller \
+                --onedir \
+                -n middleware-app \
+                middleware/app.py \
                 --add-data "config/default_config.json:config" \
                 --add-data "examples/sample_input.json:examples"
             '
