@@ -65,16 +65,20 @@ jobs:
 
               cd /work/middleware_final_project
 
+              rm -rf build dist *.spec
+
               /opt/python39/bin/pyinstaller \
                 --onedir \
                 -n middleware-app \
-                middleware/app.py \
+                run_app.py \
                 --add-data "config/default_config.json:config" \
                 --add-data "examples/sample_input.json:examples"
+
+              chmod +x dist/middleware-app/middleware-app
             '
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-arm64-centos7-build
-          path: middleware_final_project/dist/
+          path: middleware_final_project/dist/middleware-app/
