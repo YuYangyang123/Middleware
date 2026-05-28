@@ -11,16 +11,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build in manylinux2014 with Python 3.11
+      - name: Build in manylinux2014
         run: |
           docker run --rm \
             -v "$PWD":/work \
-            -w /work/middleware_final_project \
+            -w /work \
             quay.io/pypa/manylinux2014_aarch64 \
             bash -c '
-              /opt/python/cp311-cp311/bin/python -m pip install --upgrade pip
-              /opt/python/cp311-cp311/bin/python -m pip install pyinstaller
-              /opt/python/cp311-cp311/bin/pyinstaller --onedir -n middleware-app middleware/app.py \
+              set -e
+
+              yum install -y wget tar gzip make gcc zlib-devel bzip2-devel openssl-devel libffi-devel xz-devel sqlite-devel
+
+              cd /tmp
+              wget https://www.python.org/ftp/python/3.12.8/Python-3.12.8.tgz
+              tar -xzf Python-3.12.8.tgz
+              cd Python-3.12.8
+
+              ./configure --prefix=/opt/python312 --enable-shared --enable-optimizations
+              make -j2
+              make install
+
+              export LD_LIBRARY_PATH=/opt/python312/lib:$LD_LIBRARY_PATH
+              /opt/python312/bin/python3.12 -m ensurepip
+              /opt/python312/bin/python3.12 -m pip install --upgrade pip
+              /opt/python312/bin/python3.12 -m pip install pyinstaller
+
+              cd /work/middleware_final_project
+
+              /opt/python312/bin/pyinstaller --onedir -n middleware-app middleware/app.py \
                 --add-data "config/default_config.json:config" \
                 --add-data "examples/sample_input.json:examples"
             '
