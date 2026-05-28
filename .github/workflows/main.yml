@@ -23,59 +23,44 @@ jobs:
 
               rm -f /etc/yum.repos.d/*.repo
 
-              cat > /etc/yum.repos.d/CentOS.repo <<EOF
-[base]
-name=CentOS-7 - Base
-baseurl=http://vault.centos.org/altarch/7.9.2009/os/aarch64/
-gpgcheck=0
-enabled=1
-
-[updates]
-name=CentOS-7 - Updates
-baseurl=http://vault.centos.org/altarch/7.9.2009/updates/aarch64/
-gpgcheck=0
-enabled=1
-
-[extras]
-name=CentOS-7 - Extras
-baseurl=http://vault.centos.org/altarch/7.9.2009/extras/aarch64/
-gpgcheck=0
-enabled=1
-EOF
+              printf "%s\n" \
+              "[base]" \
+              "name=CentOS-7 - Base" \
+              "baseurl=http://vault.centos.org/altarch/7.9.2009/os/aarch64/" \
+              "gpgcheck=0" \
+              "enabled=1" \
+              "" \
+              "[updates]" \
+              "name=CentOS-7 - Updates" \
+              "baseurl=http://vault.centos.org/altarch/7.9.2009/updates/aarch64/" \
+              "gpgcheck=0" \
+              "enabled=1" \
+              "" \
+              "[extras]" \
+              "name=CentOS-7 - Extras" \
+              "baseurl=http://vault.centos.org/altarch/7.9.2009/extras/aarch64/" \
+              "gpgcheck=0" \
+              "enabled=1" \
+              > /etc/yum.repos.d/CentOS.repo
 
               yum clean all
               yum makecache
 
-              yum install -y \
-                gcc make wget tar gzip \
-                zlib-devel bzip2-devel \
-                libffi-devel xz-devel \
-                sqlite-devel readline-devel \
-                ncurses-devel openssl-devel \
-                binutils
+              yum install -y gcc make wget tar gzip zlib-devel bzip2-devel libffi-devel xz-devel sqlite-devel readline-devel ncurses-devel openssl-devel binutils
 
               cd /tmp
-
               wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
-
               tar -xzf Python-3.9.18.tgz
-
               cd Python-3.9.18
 
-              ./configure \
-                --prefix=/opt/python39 \
-                --enable-shared
-
+              ./configure --prefix=/opt/python39 --enable-shared
               make -j2
-
               make install
 
               export LD_LIBRARY_PATH=/opt/python39/lib:$LD_LIBRARY_PATH
 
               /opt/python39/bin/python3.9 -m ensurepip
-
               /opt/python39/bin/python3.9 -m pip install --upgrade pip
-
               /opt/python39/bin/python3.9 -m pip install pyinstaller
 
               cd /work/middleware_final_project
