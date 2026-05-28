@@ -8,80 +8,56 @@ jobs:
     runs-on: ubuntu-22.04-arm
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build in CentOS7 ARM64
         run: |
+          set -eux
+          rm -rf artifact-output
           mkdir -p artifact-output
 
           docker run --rm --platform linux/arm64/v8 \
             -v "$PWD:/src" \
             -w /src \
-            arm64v8/centos:7 \
-            /bin/bash <<'EOF'
+            arm64v8/centos:7 /bin/bash -lc '
           set -eux
 
-          sed -i 's|mirror.centos.org|vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo
-          sed -i 's|^#baseurl=http|baseurl=http|g' /etc/yum.repos.d/CentOS-*.repo
-          sed -i 's|^mirrorlist=http|#mirrorlist=http|g' /etc/yum.repos.d/CentOS-*.repo
-          sed -i 's|centos/7|altarch/7.9.2009|g' /etc/yum.repos.d/CentOS-*.repo
+          echo "=== /src ==="
+          ls -lah /src
+          find /src -maxdepth 3 -type f -name "run_app.py" -o -name "app.py"
 
-          yum clean all
-          yum install -y gcc gcc-c++ make wget tar gzip zlib-devel bzip2-devel \
-            openssl-devel ncurses-devel sqlite-devel readline-devel xz-devel \
-            libffi-devel findutils patchelf
-
-          cd /tmp
-          wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
-          tar xzf Python-3.9.18.tgz
-          cd Python-3.9.18
-
-          ./configure --prefix=/opt/python39 --enable-shared --with-system-ffi
-          make -j$(nproc)
-          make install
-
-          echo /opt/python39/lib > /etc/ld.so.conf.d/python39.conf
-          ldconfig
-
-          /opt/python39/bin/python3.9 -m ensurepip
-          /opt/python39/bin/python3.9 -m pip install -U pip setuptools wheel
-          /opt/python39/bin/python3.9 -m pip install pyinstaller
+          yum clean all || true
 
           cd /src/middleware_final_project
 
-          if [ -f requirements.txt ]; then
-            /opt/python39/bin/python3.9 -m pip install -r requirements.txt
-          fi
+          echo "=== project ==="
+          pwd
+          ls -lah
 
-          rm -rf build dist /src/artifact-output/*
+          rm -rf dist build
 
-          /opt/python39/bin/pyinstaller \
-            --clean \
-            --noconfirm \
-            --onedir \
-            --name middleware-app \
-            --add-data "config:config" \
-            --add-data "examples:examples" \
-            run_app.py
+          echo "=== check run_app ==="
+          cat run_app.py
 
-          mkdir -p /src/artifact-output
-          cp -a dist/middleware-app /src/artifact-output/
+          echo "=== temporarily build with system python if exists ==="
+          python3 --version || true
+          python --version || true
 
-          ls -lah /src/artifact-output
-          ls -lah /src/artifact-output/middleware-app
+          echo "=== full tree ==="
+          find /src -maxdepth 5 -type d -name dist -o -type d -name "middleware-app" -o -type f -name "middleware-app"
 
-          file /src/artifact-output/middleware-app/middleware-app
-          EOF
+          mkdir -p /src/artifact-output/debug
+          cp -a /src/middleware_final_project /src/artifact-output/debug/source-tree || true
+          '
 
       - name: Show artifact files
         run: |
+          echo "=== after docker ==="
           pwd
-          find artifact-output -maxdepth 3 -type f -o -type d
-          ls -lah artifact-output/middleware-app
+          find . -maxdepth 5 -print
 
-      - name: Upload artifact
+      - name: Upload debug artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-arm64-centos7-build
-          path: artifact-output/middleware-app
+          name: debug-output
+          path: artifact-output
