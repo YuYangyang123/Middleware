@@ -6,24 +6,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04-arm
-    container:
-      image: quay.io/pypa/manylinux2014_aarch64
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install PyInstaller
+      - name: Build in manylinux2014
         run: |
-          /opt/python/cp312-cp312/bin/python -m pip install --upgrade pip
-          /opt/python/cp312-cp312/bin/python -m pip install pyinstaller
-
-      - name: Build
-        run: |
-          cd middleware_final_project
-          /opt/python/cp312-cp312/bin/pyinstaller --onedir -n middleware-app middleware/app.py \
-            --add-data "config/default_config.json:config" \
-            --add-data "examples/sample_input.json:examples"
+          docker run --rm \
+            -v "$PWD":/work \
+            -w /work/middleware_final_project \
+            quay.io/pypa/manylinux2014_aarch64 \
+            bash -c '
+              /opt/python/cp312-cp312/bin/python -m pip install --upgrade pip
+              /opt/python/cp312-cp312/bin/python -m pip install pyinstaller
+              /opt/python/cp312-cp312/bin/pyinstaller --onedir -n middleware-app middleware/app.py \
+                --add-data "config/default_config.json:config" \
+                --add-data "examples/sample_input.json:examples"
+            '
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
