@@ -19,8 +19,13 @@ jobs:
             python:3.10-slim-buster \
             bash -c '
               set -e
+
+              apt-get update
+              apt-get install -y binutils
+
               python -m pip install --upgrade pip
               pip install pyinstaller
+
               pyinstaller --onedir -n middleware-app middleware/app.py \
                 --add-data "config/default_config.json:config" \
                 --add-data "examples/sample_input.json:examples"
