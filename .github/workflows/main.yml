@@ -8,15 +8,20 @@ jobs:
     runs-on: ubuntu-22.04-arm
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Build in CentOS 7 ARM64
+      - name: Build in CentOS7 ARM64
         run: |
           docker run --rm --platform linux/arm64/v8 \
             -v "$PWD:/src" \
             -w /src \
-            arm64v8/centos:7 /bin/bash <<'EOF'
+            arm64v8/centos:7 \
+            /bin/bash <<'EOF'
+
           set -eux
+
+          echo "===== fix centos7 repo ====="
 
           sed -i 's|mirror.centos.org|vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo
           sed -i 's|^#baseurl=http|baseurl=http|g' /etc/yum.repos.d/CentOS-*.repo
@@ -24,46 +29,119 @@ jobs:
           sed -i 's|centos/7|altarch/7.9.2009|g' /etc/yum.repos.d/CentOS-*.repo
 
           yum clean all
-          yum install -y gcc gcc-c++ make wget tar gzip zlib-devel bzip2-devel \
-            openssl-devel ncurses-devel sqlite-devel readline-devel xz-devel \
-            libffi-devel findutils patchelf
+
+          echo "===== install deps ====="
+
+          yum install -y \
+            gcc \
+            gcc-c++ \
+            make \
+            wget \
+            tar \
+            gzip \
+            zlib-devel \
+            bzip2-devel \
+            openssl-devel \
+            ncurses-devel \
+            sqlite-devel \
+            readline-devel \
+            xz-devel \
+            libffi-devel \
+            findutils \
+            patchelf
+
+          echo "===== build python3.9 ====="
 
           cd /tmp
+
           wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
+
           tar xzf Python-3.9.18.tgz
+
           cd Python-3.9.18
 
-          ./configure --prefix=/opt/python39 --enable-shared --with-system-ffi
+          ./configure \
+            --prefix=/opt/python39 \
+            --enable-shared \
+            --with-system-ffi
+
           make -j$(nproc)
+
           make install
 
           echo /opt/python39/lib > /etc/ld.so.conf.d/python39.conf
+
           ldconfig
 
+          echo "===== install pyinstaller ====="
+
           /opt/python39/bin/python3.9 -m ensurepip
-          /opt/python39/bin/python3.9 -m pip install -U pip setuptools wheel
+
+          /opt/python39/bin/python3.9 -m pip install -U \
+            pip \
+            setuptools \
+            wheel
+
           /opt/python39/bin/python3.9 -m pip install pyinstaller
+
+          echo "===== enter project ====="
 
           cd /src/middleware_final_project
 
-          /opt/python39/bin/python3.9 -m pip install -r requirements.txt || true
+          pwd
+
+          ls -lah
+
+          echo "===== install requirements ====="
+
+          if [ -f requirements.txt ]; then
+            /opt/python39/bin/python3.9 -m pip install -r requirements.txt
+          fi
+
+          echo "===== clean ====="
 
           rm -rf build dist
 
+          echo "===== pyinstaller build ====="
+
           /opt/python39/bin/pyinstaller \
+            --clean \
+            --noconfirm \
             --onedir \
             --name middleware-app \
             --add-data "config:config" \
             --add-data "examples:examples" \
             run_app.py
 
+          echo "===== build result ====="
+
+          ls -lah
+
+          ls -lah dist
+
+          ls -lah dist/middleware-app
+
           file dist/middleware-app/middleware-app
-          ldd dist/middleware-app/middleware-app || true
-          strings /lib64/libc.so.6 | grep GLIBC_2.17
+
+          echo "===== glibc ====="
+
+          strings /lib64/libc.so.6 | grep GLIBC_2.17 || true
+
           EOF
+
+      - name: Show artifact files
+        run: |
+          echo "===== find dist ====="
+          find . -type d -name dist
+
+          echo "===== find middleware-app ====="
+          find . -type d -name middleware-app
+
+          echo "===== list build ====="
+          ls -R middleware_final_project/dist || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-arm64-centos7-build
-          path: middleware_final_project/dist/middleware-app
+          path: middleware_final_project/dist/middleware-app/**
