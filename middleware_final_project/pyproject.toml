@@ -1,0 +1,5 @@
+[project]
+name = "detection-middleware-final"
+version = "0.3.0"
+description = "Realtime detection data conversion middleware"
+requires-python = ">=3.10"

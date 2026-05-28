@@ -1,0 +1,25 @@
+{
+  "header": {
+    "MessageId": "AA123456789",
+    "MessageType": "MannedAircraft",
+    "Timestamp": 1671354231500,
+    "Source": "MAV001",
+    "Version": "1.0"
+  },
+  "body": {
+    "FlightID": "FL12345",
+    "Callsign": "ABC123",
+    "Reg": "N12345",
+    "ACCode": "7500",
+    "Latitude": 31.125456,
+    "Longitude": 120.128456,
+    "Altitude": 1200.0,
+    "Heading": 45.0,
+    "Pitch": 0.0,
+    "Roll": 0.0,
+    "GS": 180.0,
+    "TAS": 100.0,
+    "NextPoint": "ZLYC",
+    "FrequencyMHz": 2400.0
+  }
+}
