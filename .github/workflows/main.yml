@@ -1,4 +1,4 @@
-name: Build ARM64 CentOS7 Compatible
+name: Build linux arm64 centos7
 
 on:
   workflow_dispatch:
@@ -11,70 +11,60 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build in ARM64 CentOS7
+      - name: Build in CentOS 7 ARM64
         run: |
-          docker run --rm \
-            --platform linux/arm64/v8 \
-            -v "$PWD":/work \
-            -w /work \
-            arm64v8/centos:7 \
-            bash -c '
-              set -e
+          docker run --rm --platform linux/arm64/v8 \
+            -v "$PWD:/src" \
+            -w /src \
+            arm64v8/centos:7 bash -lc '
+          set -eux
 
-              rm -f /etc/yum.repos.d/*.repo
+          sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/CentOS-*.repo
+          sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/CentOS-*.repo
+          sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/CentOS-*.repo
+          sed -i s|centos/7|altarch/7.9.2009|g /etc/yum.repos.d/CentOS-*.repo
 
-              printf "%s\n" \
-              "[base]" \
-              "name=CentOS-7 - Base" \
-              "baseurl=http://vault.centos.org/altarch/7.9.2009/os/aarch64/" \
-              "gpgcheck=0" \
-              "enabled=1" \
-              "" \
-              "[updates]" \
-              "name=CentOS-7 - Updates" \
-              "baseurl=http://vault.centos.org/altarch/7.9.2009/updates/aarch64/" \
-              "gpgcheck=0" \
-              "enabled=1" \
-              "" \
-              "[extras]" \
-              "name=CentOS-7 - Extras" \
-              "baseurl=http://vault.centos.org/altarch/7.9.2009/extras/aarch64/" \
-              "gpgcheck=0" \
-              "enabled=1" \
-              > /etc/yum.repos.d/CentOS.repo
+          yum clean all
+          yum install -y gcc gcc-c++ make wget tar gzip zlib-devel bzip2-devel \
+            openssl-devel ncurses-devel sqlite-devel readline-devel xz-devel \
+            libffi-devel findutils patchelf
 
-              yum clean all
-              yum makecache
+          cd /tmp
+          wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
+          tar xzf Python-3.9.18.tgz
+          cd Python-3.9.18
 
-              yum install -y gcc make wget tar gzip zlib-devel bzip2-devel libffi-devel xz-devel sqlite-devel readline-devel ncurses-devel openssl-devel binutils
+          ./configure --prefix=/opt/python39 --enable-shared --with-system-ffi
+          make -j$(nproc)
+          make install
 
-              cd /tmp
-              wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
-              tar -xzf Python-3.9.18.tgz
-              cd Python-3.9.18
+          echo /opt/python39/lib > /etc/ld.so.conf.d/python39.conf
+          ldconfig
 
-              ./configure --prefix=/opt/python39 --enable-shared
-              make -j2
-              make install
+          /opt/python39/bin/python3.9 -m ensurepip
+          /opt/python39/bin/python3.9 -m pip install -U pip setuptools wheel
+          /opt/python39/bin/python3.9 -m pip install pyinstaller
 
-              export LD_LIBRARY_PATH=/opt/python39/lib:$LD_LIBRARY_PATH
+          cd /src/middleware_final_project
 
-              /opt/python39/bin/python3.9 -m ensurepip
-              /opt/python39/bin/python3.9 -m pip install --upgrade pip
-              /opt/python39/bin/python3.9 -m pip install pyinstaller
+          /opt/python39/bin/python3.9 -m pip install -r requirements.txt || true
 
-              cd /work/middleware_final_project
+          rm -rf build dist
 
-              /opt/python39/bin/pyinstaller \
-                --onedir \
-                -n middleware-app \
-                middleware/app.py \
-                --add-data "config/default_config.json:config" \
-                --add-data "examples/sample_input.json:examples"
-            '
+          /opt/python39/bin/pyinstaller \
+            --onedir \
+            --name middleware-app \
+            --add-data "config:config" \
+            --add-data "examples:examples" \
+            run_app.py
+
+          file dist/middleware-app/middleware-app
+          ldd dist/middleware-app/middleware-app || true
+          strings /lib64/libc.so.6 | grep GLIBC_2.17
+          '
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-arm64-centos7-build
-          path: middleware_final_project/dist/
+          path: middleware_final_project/dist/middleware-app
