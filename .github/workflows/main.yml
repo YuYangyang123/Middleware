@@ -11,16 +11,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build in manylinux2014
+      - name: Build in manylinux2014 with Python 3.11
         run: |
           docker run --rm \
             -v "$PWD":/work \
             -w /work/middleware_final_project \
             quay.io/pypa/manylinux2014_aarch64 \
             bash -c '
-              /opt/python/cp312-cp312/bin/python -m pip install --upgrade pip
-              /opt/python/cp312-cp312/bin/python -m pip install pyinstaller
-              /opt/python/cp312-cp312/bin/pyinstaller --onedir -n middleware-app middleware/app.py \
+              /opt/python/cp311-cp311/bin/python -m pip install --upgrade pip
+              /opt/python/cp311-cp311/bin/python -m pip install pyinstaller
+              /opt/python/cp311-cp311/bin/pyinstaller --onedir -n middleware-app middleware/app.py \
                 --add-data "config/default_config.json:config" \
                 --add-data "examples/sample_input.json:examples"
             '
