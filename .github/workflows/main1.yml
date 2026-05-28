@@ -1,33 +1,95 @@
-name: Build ARM64 Linux Binary
+name: Build ARM64 CentOS7 Compatible
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-22.04-arm
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
+      - name: Build in ARM64 CentOS7
         run: |
-          python -m pip install --upgrade pip
-          pip install pyinstaller
-          pip install -r requirements.txt
+          docker run --rm \
+            --platform linux/arm64/v8 \
+            -v "$PWD":/work \
+            -w /work \
+            arm64v8/centos:7 \
+            bash -c '
+              set -e
 
-      - name: Build
-        run: |
-          pyinstaller --onedir main.py
+              rm -f /etc/yum.repos.d/*.repo
+
+              cat > /etc/yum.repos.d/CentOS.repo <<EOF
+[base]
+name=CentOS-7 - Base
+baseurl=http://vault.centos.org/altarch/7.9.2009/os/aarch64/
+gpgcheck=0
+enabled=1
+
+[updates]
+name=CentOS-7 - Updates
+baseurl=http://vault.centos.org/altarch/7.9.2009/updates/aarch64/
+gpgcheck=0
+enabled=1
+
+[extras]
+name=CentOS-7 - Extras
+baseurl=http://vault.centos.org/altarch/7.9.2009/extras/aarch64/
+gpgcheck=0
+enabled=1
+EOF
+
+              yum clean all
+              yum makecache
+
+              yum install -y \
+                gcc make wget tar gzip \
+                zlib-devel bzip2-devel \
+                libffi-devel xz-devel \
+                sqlite-devel readline-devel \
+                ncurses-devel openssl-devel \
+                binutils
+
+              cd /tmp
+
+              wget https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
+
+              tar -xzf Python-3.9.18.tgz
+
+              cd Python-3.9.18
+
+              ./configure \
+                --prefix=/opt/python39 \
+                --enable-shared
+
+              make -j2
+
+              make install
+
+              export LD_LIBRARY_PATH=/opt/python39/lib:$LD_LIBRARY_PATH
+
+              /opt/python39/bin/python3.9 -m ensurepip
+
+              /opt/python39/bin/python3.9 -m pip install --upgrade pip
+
+              /opt/python39/bin/python3.9 -m pip install pyinstaller
+
+              cd /work/middleware_final_project
+
+              /opt/python39/bin/pyinstaller \
+                --onedir \
+                -n middleware-app \
+                middleware/app.py \
+                --add-data "config/default_config.json:config" \
+                --add-data "examples/sample_input.json:examples"
+            '
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-arm64-build
-          path: dist/
+          name: linux-arm64-centos7-build
+          path: middleware_final_project/dist/
