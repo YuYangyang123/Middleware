@@ -27,7 +27,7 @@ from .utils import (
 )
 
 
-@dataclass(slots=True)
+@dataclass
 class TargetTrackMemory:
     """单目标在某一类载荷里的状态记忆。"""
 
@@ -38,7 +38,7 @@ class TargetTrackMemory:
     emitted_lost: bool = False
 
 
-@dataclass(slots=True)
+@dataclass
 class StateUpdate:
     state: TrackState
     should_report: bool
@@ -48,7 +48,7 @@ class StateUpdate:
     elapsed_since_first_hit_s: float
 
 
-@dataclass(slots=True)
+@dataclass
 class CommonDetectionStateMachine:
     """统一报送状态机：INIT→CANDIDATE→TRACKING→LOST_PENDING→LOST。"""
 
@@ -130,7 +130,7 @@ def _frequency_in_bands(freq_mhz: float, bands_mhz: Iterable[Iterable[float]]) -
     return False
 
 
-@dataclass(slots=True)
+@dataclass
 class RadarModel:
     """雷达模型：距离/角度/速度门限 + Pd 随机命中 + 测量误差注入。"""
 
@@ -199,7 +199,7 @@ class RadarModel:
         return reports
 
 
-@dataclass(slots=True)
+@dataclass
 class ElectroOpticalModel:
     """光电模型：距离门限、云台覆盖、FOV 视场、捕获确认、置信度、脱靶量和目标框。"""
 
@@ -290,7 +290,7 @@ class ElectroOpticalModel:
         return int(round(cx - width / 2.0)), int(round(cy - height / 2.0)), width, height
 
 
-@dataclass(slots=True)
+@dataclass
 class RadioDetectionModel:
     """无线电模型：3km 距离、-5~55°俯仰、频段匹配、截获延迟、测向误差和置信度。"""
 
@@ -373,7 +373,7 @@ class RadioDetectionModel:
         return round(max(0.0, min(100.0, 100.0 * distance_score * strength_score * band_score * type_factor * target.quality)), 1)
 
 
-@dataclass(slots=True)
+@dataclass
 class PayloadModelSuite:
     """一次性运行雷达、光电、无线电三类模型。"""
 
