@@ -10,7 +10,7 @@ from typing import Any, Dict
 from .utils import GeoPoint
 
 
-@dataclass(slots=True)
+@dataclass
 class MiddlewareConfig:
     timestamp_mode: str = "auto"
     target_type_default: str = "manned_aircraft"
