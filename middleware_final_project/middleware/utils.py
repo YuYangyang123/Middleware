@@ -14,7 +14,8 @@ WGS84_F = 1 / 298.257223563
 WGS84_E2 = WGS84_F * (2 - WGS84_F)
 
 
-@dataclass(slots=True)
+# @dataclass(slots=True)
+@dataclass
 class GeoPoint:
     lat: float
     lon: float
