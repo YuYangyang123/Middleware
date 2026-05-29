@@ -35,7 +35,7 @@ class TrackState(str, Enum):
     LOST = "LOST"
 
 
-@dataclass(slots=True)
+@dataclass
 class TargetState:
     """统一目标状态。
 
@@ -77,7 +77,7 @@ class TargetState:
         return (self.vx**2 + self.vy**2 + self.vz**2) ** 0.5
 
 
-@dataclass(slots=True)
+@dataclass
 class DetectionReport:
     """载荷模型输出的中性报告，后续由输出端编码成具体协议。"""
 
@@ -105,7 +105,7 @@ class DetectionReport:
         return self.state == TrackState.LOST
 
 
-@dataclass(slots=True)
+@dataclass
 class OutputPacket:
     """已经编码完成、等待发送的输出报文。"""
 
