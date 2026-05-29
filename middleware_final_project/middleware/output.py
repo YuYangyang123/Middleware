@@ -21,8 +21,8 @@ from .utils import clamp, crc16_modbus, json_dumps_bytes, now_ms, now_us, scale_
 
 LOGGER = logging.getLogger(__name__)
 
-
-@dataclass(slots=True)
+# @dataclass(slots=True)
+@dataclass
 class RadarFrameBuilder:
     """雷达点迹 TCP 二进制帧。"""
 
@@ -71,8 +71,8 @@ class RadarFrameBuilder:
 
 
 
-
-@dataclass(slots=True)
+@dataclass
+# @dataclass(slots=True)
 class RadarStatusFrameBuilder:
     """雷达状态数据上传 1002。
 
@@ -107,8 +107,8 @@ class RadarStatusFrameBuilder:
             frame,
             metadata={"frame_id": self.frame_id, "work_status": work_status},
         )
-
-@dataclass(slots=True)
+@dataclass
+# @dataclass(slots=True)
 class ElectroOpticalUdpBuilder:
     """光电 UDP 头 + JSON。"""
 
