@@ -164,8 +164,8 @@ def _varstr(text: str) -> bytes:
 
 
 
-
-@dataclass(slots=True)
+@dataclass
+# @dataclass(slots=True)
 class RadioDeviceFrameBuilder:
     """无线电侦测设备数据 1010。
 
@@ -210,8 +210,8 @@ class RadioDeviceFrameBuilder:
             frame,
             metadata={"packet_id": self.packet_id, "station_id": self.station_id, "work_status": work_status, "target_count": target_count},
         )
-
-@dataclass(slots=True)
+@dataclass
+# @dataclass(slots=True)
 class RadioTargetFrameBuilder:
     """无线电侦测 TCP 二进制帧。"""
 
@@ -253,8 +253,8 @@ class RadioTargetFrameBuilder:
         distance = struct.pack(self.endian + "f", float(report.distance_m if not report.is_lost else 0.0))
         return fixed + distance + _varstr(unique_id) + _varstr(target_name) + _varstr("OFDM")
 
-
-@dataclass(slots=True)
+@dataclass
+# @dataclass(slots=True)
 class MessageParseJsonBuilder:
     """报文解析 JSON 输出，作为无线电链路的兼容输出。"""
 
@@ -293,8 +293,8 @@ class MessageParseJsonBuilder:
             "targetMask": 0,
         }
 
-
-@dataclass(slots=True)
+@dataclass
+# @dataclass(slots=True)
 class OutputDispatcher:
     """汇总所有输出报文。"""
 
